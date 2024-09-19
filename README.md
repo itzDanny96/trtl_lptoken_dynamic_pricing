@@ -1,3 +1,8 @@
+# Dynamic Pricing for LP tokens 
+
+This was built for [Am_Panic](https://x.com/am__panic) to dynamically price an asset in LP tokens.
+
+
 ## Getting Started
 
 First, clone this repository.
