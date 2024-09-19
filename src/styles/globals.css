@@ -25,3 +25,23 @@ body {
     text-wrap: balance;
   }
 }
+
+// Removes up and down arrows for number input in mintModal
+@layer utilities {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+// Used to add gradient colour to mintModal border
+.border-gradient {
+  @apply rounded-md border-4 border-solid;
+  border-image: linear-gradient(to bottom, #a855f7, #22c55e);
+  border-image-slice: 1; /* This will apply the rounded corners */
+}

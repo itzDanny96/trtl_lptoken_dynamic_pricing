@@ -1,13 +1,14 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+// pages/index.tsx
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import localFont from "next/font/local";
-import { getTrtlPrice } from "./api/getTRTLUSDPrice"; 
-import { getAdaPrice } from "./api/getADAUSDPrice";
-import { getTotalLPTokens } from "./api/getTotalLPTokens";
-import { getTrtlTVL } from "./api/getTrtlTVL";
-import { formatNumber } from "../helpers/formatNumber";
+import { getAssetPrice } from "./api/getUSDPrice";
+import { getADAV1PoolSupply, getADAV2PoolSupply } from "./api/getADATotalLPTokens";
+import { fetchTrtlV1PoolData, fetchTrtlV2PoolData } from "./api/getADATRTLTVLData";
+import { getSOLTRTLLPprice } from "./api/getTRTLSOLData";
 import MintModal from "./components/mintModal";
+import PriceCard from "./components/displayPrice";
+import LPTokensCard from "./components/LPTokensCard";
+import MintButton from "./components/mintModalButton";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,11 +25,16 @@ const geistMono = localFont({
 export default function Home() {
   const [trtlprice, setTrtlPrice] = useState<number | null>(null);
   const [adaprice, setAdaPrice] = useState<number | null>(null);
-  const [totalAdaLocked, setTotalAdaLocked] = useState<number | null>(null); 
-  const [lpTokens, setLPTokens] = useState<number | null>(null);
+  const [solprice, setSolPrice] = useState<number | null>(null);
+  const [adaTvlV1, setAdaTvlV1] = useState<number | null>(null); 
+  const [adaTvlV2, setAdaTvlV2] = useState<number | null>(null); 
+  const [adaLpTokensV1, setV1LPTokens] = useState<number | null>(null);
+  const [adaLpTokensV2, setV2LPTokens] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [lpTokensNeeded, setLPTokensNeeded] = useState<number | null>(null);
+  const [lpTokensNeededV1, setLPTokensNeededV1] = useState<number | null>(null);
+  const [lpTokensNeededV2, setLPTokensNeededV2] = useState<number | null>(null);
+  const [lpTokensSolNeeded, setLPTokensSolNeeded] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const openModal = () => {
@@ -39,38 +45,26 @@ export default function Home() {
     setIsModalOpen(false);
   };
 
-  const fetchAdaPrice = async () => {
+  const fetchAssetPrice = async (assetId: string, setPrice: React.Dispatch<React.SetStateAction<number | null>>) => {
     try {
       setLoading(true);
-      const fetchedAdaPrice = await getAdaPrice();
-      setAdaPrice(fetchedAdaPrice);
+      const fetchedPrice = await getAssetPrice(assetId);
+      setPrice(fetchedPrice);
       const currentTime = new Date().toLocaleTimeString();
       setLastUpdated(currentTime);
     } catch (error) {
-      console.error("Failed to retrieve ADA price:", error);
+      console.error(`Failed to retrieve ${assetId} price:`, error);
     } finally {
       setLoading(false);
     }
   };
-
-  const fetchTrtlPrice = async () => {
+  
+  const fetchTotalADALPTokens = async () => {
     try {
-      setLoading(true);
-      const fetchedTrtlPrice = await getTrtlPrice();
-      setTrtlPrice(fetchedTrtlPrice);
-      const currentTime = new Date().toLocaleTimeString();
-      setLastUpdated(currentTime);
-    } catch (error) {
-      console.error("Failed to retrieve TRTL price:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTotalLPTokens = async () => {
-    try {
-      const fetchedLPTokens = await getTotalLPTokens();
-      setLPTokens(fetchedLPTokens);
+      const fetchedLPV1Tokens = await getADAV1PoolSupply();
+      setV1LPTokens(fetchedLPV1Tokens);
+      const fetchedLPV2Tokens = await getADAV2PoolSupply();
+      setV2LPTokens(fetchedLPV2Tokens);
     } catch (error) {
       console.error("Failed to retrieve total LP tokens:", error);
     }
@@ -78,59 +72,90 @@ export default function Home() {
 
   const fetchTotalAdaLocked = async () => {
     try {
-      const response = await getTrtlTVL();
-      setTotalAdaLocked(response);
+      const responsev1 = await fetchTrtlV1PoolData();
+      setAdaTvlV1(responsev1);
+      const responsev2 = await fetchTrtlV2PoolData();
+      setAdaTvlV2(responsev2);
     } catch (error) {
-      console.error("Failed to retrieve total ADA locked:", error);
+      console.error("Failed to retrieve total ADA locked in V1 pool:", error);
     }
   };
 
-  const calculateRequiredLPTokens = () => {
+  const calculateRequiredADALPTokensV1 = () => {
     try {
-      if (adaprice && totalAdaLocked !== null && lpTokens !== null) {
-        // Step 1: Calculate ADA amount for $95
-        const adaAmountFor95USD = 95.00 / adaprice;
-        const trtlAmountFor95USD = 95.00 / trtlprice;
-        console.log(adaAmountFor95USD/2," Ada");
-        console.log(trtlAmountFor95USD/2," Trtl")
-        // Step 2: Calculate ADA value of 1 LP token
-        const adaValuePerLPToken = totalAdaLocked / lpTokens;
-
-        // Step 3: Calculate LP tokens needed to equal $95 in ADA
-        const lpTokensNeeded = adaAmountFor95USD / adaValuePerLPToken;
-        setLPTokensNeeded(lpTokensNeeded);
+      if (adaprice && adaTvlV1 !== null && adaLpTokensV1 !== null) {
+        const poolValueInUSD = adaTvlV1 * adaprice;
+        const usdValuePerLPToken = poolValueInUSD / adaLpTokensV1;
+        const lpTokensNeededV1 = 95.00 / usdValuePerLPToken;
+        setLPTokensNeededV1(lpTokensNeededV1);
       } else {
-        throw new Error('Failed to fetch necessary data for calculations');
+        throw new Error('Failed to fetch necessary data for V1 pool calculations');
       }
     } catch (error) {
-      console.error('Error calculating LP tokens required:', error);
-      setLPTokensNeeded(null);
+      console.error('Error calculating V1 LP tokens required:', error);
+      setLPTokensNeededV1(null);
     }
   };
 
-  useEffect(() => { // Fetch values when component loads
-    fetchAdaPrice();
-    fetchTrtlPrice();
+  const calculateRequiredADALPTokensV2 = () => {
+    try {
+      if (adaprice && adaTvlV2 !== null && adaLpTokensV2 !== null) {
+        const poolValueInUSD = adaTvlV2 * adaprice;
+        const usdValuePerLPToken = poolValueInUSD / adaLpTokensV2;
+        const lpTokensNeededV2 = 95.00 / usdValuePerLPToken;
+        setLPTokensNeededV2(lpTokensNeededV2);
+      } else {
+        throw new Error('Failed to fetch necessary data for V2 pool calculations');
+      }
+    } catch (error) {
+      console.error('Error calculating V2 LP tokens required:', error);
+      setLPTokensNeededV2(null);
+    }
+  };
+  
+  const calculateRequiredSOLLPTokens = async () => {
+    try {
+      const solLPprice = await getSOLTRTLLPprice();
+      if (solLPprice && solLPprice !== null) {
+        const lpTokensSolNeeded = 95.00 / solLPprice;
+        setLPTokensSolNeeded(lpTokensSolNeeded);
+      } else {
+        throw new Error('Failed to fetch necessary data for SOL calculations');
+      }
+    } catch (error) {
+      console.error('Error calculating SOL/TRTL LP tokens required:', error);
+      setLPTokensSolNeeded(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssetPrice('cardano', setAdaPrice);
+    fetchAssetPrice('solana', setSolPrice);
+    fetchAssetPrice('turtlecoin', setTrtlPrice);
     fetchTotalAdaLocked();
-    fetchTotalLPTokens(); 
+    fetchTotalADALPTokens();
 
-    const intervalId = setInterval(() => {// Update every 10 minutes
-      fetchAdaPrice();
-      fetchTrtlPrice();
-      fetchTotalAdaLocked();
-      fetchTotalLPTokens(); 
-    }, 600000);
+    // const intervalId = setInterval(() => {
+    //   fetchAssetPrice('cardano', setAdaPrice);
+    //   fetchAssetPrice('solana', setSolPrice);
+    //   fetchAssetPrice('tortol', setTrtlPrice);
+    //   fetchTotalAdaLocked();
+    //   fetchTotalADALPTokens();
+    // }, 600000);
 
-    return () => clearInterval(intervalId);
+    // return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
-    calculateRequiredLPTokens(); // Recalculate whenever adaprice, trtlprice or totalAdaLocked change
-  }, [adaprice, trtlprice, totalAdaLocked, calculateRequiredLPTokens]);
+    calculateRequiredADALPTokensV1();
+    calculateRequiredADALPTokensV2();
+    calculateRequiredSOLLPTokens();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adaprice, solprice, adaTvlV1, adaTvlV2, adaLpTokensV1, adaLpTokensV2]);
 
   return (
     <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
+      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
       style={{
         backgroundImage: 'url("/media/bg.png")',
         backgroundSize: "cover",
@@ -143,93 +168,57 @@ export default function Home() {
           <li className="mb-2 mx-auto text-center">Mint price: $95.</li>
         </ul>
 
-        <div className="flex gap-4 items-center flex-col">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+        <div className="flex gap-4 items-center flex-row mx-auto">
+          <PriceCard
             href="https://www.coingecko.com/en/coins/cardano"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark"
-              src="/cardano.png"
-              alt="Cardano logo"
-              width={40}
-              height={40}
-            />
-            ADA Price: {loading ? "Loading..." : adaprice ? `$${adaprice.toFixed(4)}` : "Price unavailable"}
-            {!loading && lastUpdated && (
-              <span className="text-xs text-gray-500 block mt-1">
-                (Last updated at: {lastUpdated})
-              </span>
-            )}
-          </a>
-
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+            imgSrc="/cardano.png"
+            imgAlt="Cardano logo"
+            price={adaprice}
+            loading={loading}
+            lastUpdated={lastUpdated}
+          />
+          <PriceCard
             href="https://www.coingecko.com/en/coins/tortol"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark"
-              src="/tortol_coin.png"
-              alt="Tortol logo"
-              width={50}
-              height={50}
-            />
-            TRTL Price: {loading ? "Loading..." : trtlprice ? `$${trtlprice.toFixed(9)}` : "Price unavailable"}
-            {!loading && lastUpdated && (
-              <span className="text-xs text-gray-500 block mt-1">
-                (Last updated at: {lastUpdated})
-              </span>
-            )}
-          </a>
-
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://www.taptools.io/charts/token/0be55d262b29f564998ff81efe21bdc0022621c12f15af08d0f2ddb1.ccd6ccf11c5eab6a9964bc9a080a506342a4bb037209e100f0be238da7495a9c"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark"
-              src="/minLPtoken.png"
-              alt="MinSwap LP token"
-              width={40}
-              height={40}
-            />
-            TRTL/ADA Pool TVL:{" "}
-            {totalAdaLocked ? `${formatNumber(totalAdaLocked)} ADA` : "Loading..."}
-          </a>
-
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-          >
-            <Image
-              className="dark"
-              src="/minLPtoken.png"
-              alt="MinSwap LP token"
-              width={40}
-              height={40}
-            />
-            Amount of LP tokens needed:{" "}
-            {lpTokensNeeded !== null ? `${formatNumber(lpTokensNeeded)}` : "Loading..."}
-          </a>
-
-           {/* Mint Button */}
-           <button
-            onClick={openModal}
-            className="mt-10 bg-white text-black px-6 py-3 rounded-full hover:text-white hover:bg-green-600 transition"
-          >
-            Mint 
-          </button>
-
+            imgSrc="/tortol_coin.png"
+            imgAlt="Tortol logo"
+            price={trtlprice}
+            loading={loading}
+            lastUpdated={lastUpdated}
+          />
+          <PriceCard
+            href="https://www.coingecko.com/en/coins/solana"
+            imgSrc="/solanaLogoMark.png"
+            imgAlt="Solana logo"
+            price={solprice}
+            loading={loading}
+            lastUpdated={lastUpdated}
+          />
         </div>
+        
+        <div className="flex gap-4 items-center flex-cols-2 mx-auto">
+          <LPTokensCard
+            imgSrc="/minLPtoken.png"
+            imgAlt="ADA V1 LP token"
+            amount={lpTokensNeededV1}
+            version="V1"
+          />
+          <LPTokensCard
+            imgSrc="/minLPtoken.png"
+            imgAlt="ADA V2 LP token"
+            amount={lpTokensNeededV2}
+            version="V2"
+          />
+          <LPTokensCard
+            imgSrc="/solanaLogoMark.png"
+            imgAlt="SOL LP token"
+            amount={lpTokensSolNeeded}
+            version="V1"
+          />
+        </div>
+
+        <MintButton onClick={openModal} />
       </main>
-      <footer className="flex gap-6 flex-wrap items-center justify-center"></footer>
-      {/* Render MintModal if the modal is open */}
-      {isModalOpen && <MintModal onClose={closeModal} lpTokensNeeded={lpTokensNeeded} />}
+      {isModalOpen && <MintModal onClose={closeModal} lpTokensNeededADAV1={lpTokensNeededV1} lpTokensNeededADAV2={lpTokensNeededV2} lpTokensNeededSOL={lpTokensSolNeeded}/>}
     </div>
   );
 }
