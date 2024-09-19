@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatNumber } from "../../helpers/formatNumber";
+import { formatNumber } from "../helpers/formatNumber";
 
 interface MintModalProps {
   onClose: () => void;

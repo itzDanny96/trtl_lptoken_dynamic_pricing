@@ -1,6 +1,6 @@
 // components/LPTokensCard.tsx
 import Image from "next/image";
-import { formatNumber } from "../../helpers/formatNumber";
+import { formatNumber } from "../helpers/formatNumber";
 
 interface LPTokensCardProps {
   imgSrc: string;
@@ -10,7 +10,7 @@ interface LPTokensCardProps {
 }
 
 const LPTokensCard: React.FC<LPTokensCardProps> = ({ imgSrc, imgAlt, amount, version }) => {
-  const versionText = version ? `ADA ${version}` : 'ADA';
+  const versionText = version ? `ADA ${version}` : 'SOL';
 
   return (
     <a

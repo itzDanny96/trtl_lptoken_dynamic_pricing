@@ -5,10 +5,10 @@ import { getAssetPrice } from "./api/getUSDPrice";
 import { getADAV1PoolSupply, getADAV2PoolSupply } from "./api/getADATotalLPTokens";
 import { fetchTrtlV1PoolData, fetchTrtlV2PoolData } from "./api/getADATRTLTVLData";
 import { getSOLTRTLLPprice } from "./api/getTRTLSOLData";
-import MintModal from "./components/mintModal";
-import PriceCard from "./components/displayPrice";
-import LPTokensCard from "./components/LPTokensCard";
-import MintButton from "./components/mintModalButton";
+import MintModal from "../components/mintModal";
+import PriceCard from "../components/displayPrice";
+import LPTokensCard from "../components/lpTokensCard";
+import MintButton from "../components/mintModalButton";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -212,7 +212,6 @@ export default function Home() {
             imgSrc="/solanaLogoMark.png"
             imgAlt="SOL LP token"
             amount={lpTokensSolNeeded}
-            version="V1"
           />
         </div>
 
