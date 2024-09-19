@@ -82,35 +82,38 @@ export default function Home() {
 
   const calculateRequiredADALPTokensV1 = () => {
     try {
-      if (adaprice && adaTvlV1 !== null && adaLpTokensV1 !== null) {
+      if (adaprice !== null && adaTvlV1 !== null && adaLpTokensV1 !== null) {
         const poolValueInUSD = adaTvlV1 * adaprice;
         const usdValuePerLPToken = poolValueInUSD / adaLpTokensV1;
         const lpTokensNeededV1 = 95.00 / usdValuePerLPToken;
         setLPTokensNeededV1(lpTokensNeededV1);
       } else {
-        throw new Error('Failed to fetch necessary data for V1 pool calculations');
+        console.error('Not all data is available for V1 LP token calculation');
+        setLPTokensNeededV1(null);
       }
     } catch (error) {
       console.error('Error calculating V1 LP tokens required:', error);
       setLPTokensNeededV1(null);
     }
   };
-
+  
   const calculateRequiredADALPTokensV2 = () => {
     try {
-      if (adaprice && adaTvlV2 !== null && adaLpTokensV2 !== null) {
+      if (adaprice !== null && adaTvlV2 !== null && adaLpTokensV2 !== null) {
         const poolValueInUSD = adaTvlV2 * adaprice;
         const usdValuePerLPToken = poolValueInUSD / adaLpTokensV2;
         const lpTokensNeededV2 = 95.00 / usdValuePerLPToken;
         setLPTokensNeededV2(lpTokensNeededV2);
       } else {
-        throw new Error('Failed to fetch necessary data for V2 pool calculations');
+        console.error('Not all data is available for V2 LP token calculation');
+        setLPTokensNeededV2(null);
       }
     } catch (error) {
       console.error('Error calculating V2 LP tokens required:', error);
       setLPTokensNeededV2(null);
     }
   };
+  
   
   const calculateRequiredSOLLPTokens = async () => {
     try {
@@ -146,11 +149,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    calculateRequiredADALPTokensV1();
-    calculateRequiredADALPTokensV2();
-    calculateRequiredSOLLPTokens();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adaprice, solprice, adaTvlV1, adaTvlV2, adaLpTokensV1, adaLpTokensV2]);
+    if (adaprice !== null && adaTvlV1 !== null && adaTvlV2 !== null && adaLpTokensV1 !== null && adaLpTokensV2 !== null) {
+      calculateRequiredADALPTokensV1();
+      calculateRequiredADALPTokensV2();
+      calculateRequiredSOLLPTokens();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adaprice, adaTvlV1, adaTvlV2, adaLpTokensV1, adaLpTokensV2]);
+
+  console.log(adaprice, adaTvlV1, adaTvlV2, adaLpTokensV1, adaLpTokensV2)
 
   return (
     <div

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import axios from 'axios';
 
 const apiUrl = "https://openapi.taptools.io/api/v1/token/pools";
@@ -10,17 +11,22 @@ const TAPTOOLS_API_KEY = ""; // Input your Taptools API key here.
 
 export async function fetchTrtlV1PoolData(): Promise<number> {
   try {
-    const response = await axios.get(apiUrl, {
-      params: { onchainID: trtlonchainIDv1pool },
-      headers: {
-        'x-api-key': TAPTOOLS_API_KEY,
-      },
-    });
+    // Mock response during testing
+    // Easily undo this change by commenting out the next two lines and uncommenting the actual response handling.
+    const v1ADAtvl = 100000;
+    return v1ADAtvl;
 
-    const poolData = response.data[0];
-    const v1ADAtvl = poolData.tokenBLocked * 2;
-    console.log("Test")
-    return v1ADAtvl; 
+    // Actual API call (comment this section out during testing)
+    // const response = await axios.get(apiUrl, {
+    //   params: { onchainID: trtlonchainIDv1pool },
+    //   headers: {
+    //     'x-api-key': TAPTOOLS_API_KEY,
+    //   },
+    // });
+    //
+    // const poolData = response.data[0];
+    // const v1ADAtvl = poolData.tokenBLocked * 2;
+    // return v1ADAtvl;
   } catch (error) {
     console.error("Error fetching TRTL V1 pool data:", error);
     throw new Error('Failed to fetch TRTL V1 pool data');
@@ -29,16 +35,21 @@ export async function fetchTrtlV1PoolData(): Promise<number> {
 
 export async function fetchTrtlV2PoolData(): Promise<number> {
   try {
-    const response = await axios.get(apiUrl, {
-      params: { onchainID: trtlonchainIDv2pool },
-      headers: {
-        'x-api-key': TAPTOOLS_API_KEY,
-      },
-    });
-
-    const poolData = response.data[0];
-    const v2ADAtvl = poolData.tokenBLocked * 2;
-    return v2ADAtvl; 
+    // Mock response during testing
+    // Easily undo this change by commenting out the next two lines and uncommenting the actual response handling.
+    const v2ADAtvl = 100000;
+    return v2ADAtvl;
+    // Actual API call (comment this section out during testing)
+    // const response = await axios.get(apiUrl, {
+    //   params: { onchainID: trtlonchainIDv2pool },
+    //   headers: {
+    //     'x-api-key': TAPTOOLS_API_KEY,
+    //   },
+    // });
+    //
+    // const poolData = response.data[0];
+    // const v2ADAtvl = poolData.tokenBLocked * 2;
+    // return v2ADAtvl;
   } catch (error) {
     console.error("Error fetching TRTL V2 pool data:", error);
     throw new Error('Failed to fetch TRTL V2 pool data');
