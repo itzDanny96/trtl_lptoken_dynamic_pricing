@@ -1,4 +1,3 @@
-// components/LPTokensCard.tsx
 import Image from "next/image";
 import { formatNumber } from "../helpers/formatNumber";
 

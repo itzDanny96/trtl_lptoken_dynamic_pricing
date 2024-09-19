@@ -1,4 +1,3 @@
-// components/MintButton.tsx
 interface MintButtonProps {
     onClick: () => void;
   }

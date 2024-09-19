@@ -1,4 +1,3 @@
-// pages/index.tsx
 import { useEffect, useState } from "react";
 import localFont from "next/font/local";
 import { getAssetPrice } from "./api/getUSDPrice";
