@@ -136,16 +136,6 @@ export default function Home() {
     fetchAssetPrice('turtlecoin', setTrtlPrice);
     fetchTotalAdaLocked();
     fetchTotalADALPTokens();
-
-    // const intervalId = setInterval(() => {
-    //   fetchAssetPrice('cardano', setAdaPrice);
-    //   fetchAssetPrice('solana', setSolPrice);
-    //   fetchAssetPrice('tortol', setTrtlPrice);
-    //   fetchTotalAdaLocked();
-    //   fetchTotalADALPTokens();
-    // }, 600000);
-
-    // return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
